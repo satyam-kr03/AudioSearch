@@ -1,0 +1,9 @@
+msclap
+torch
+torchaudio
+numpy
+librosa
+matplotlib
+scipy
+scikit-learn
+openai
