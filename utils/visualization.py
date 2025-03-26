@@ -15,4 +15,5 @@ def visualize_segmentation(audio_file, boundaries):
     plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
     plt.tight_layout()
+    plt.savefig("figures/segmentation.png")
     plt.show()

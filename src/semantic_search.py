@@ -5,7 +5,7 @@ from .audio_segmentation import AudioSegmenter
 from .embedding import EmbeddingGenerator
 
 class SemanticAudioSearch:
-    def __init__(self, clap_model=None, use_cuda=True, openai_api_key=None):
+    def __init__(self, clap_model=None, use_cuda=True):
         """
         Initialize Semantic Audio Search system
         
@@ -18,12 +18,6 @@ class SemanticAudioSearch:
         self.audio_segmenter = AudioSegmenter()
         self.embedding_generator = EmbeddingGenerator(clap_model, use_cuda)
         
-        # OpenAI API key handling
-        self.openai_api_key = openai_api_key
-        if openai_api_key:
-            import openai
-            openai.api_key = openai_api_key
-
     def query_with_expansion(self, audio_file, text_query, 
                              num_expansions=3, 
                              segment_method='mfcc',
@@ -53,10 +47,7 @@ class SemanticAudioSearch:
         """
         # Get segment boundaries
         boundaries = self.audio_segmenter.detect_segments(audio_file, method=segment_method)
-        
-        # if visualize:
-        #     self._visualize_segmentation(audio_file, boundaries)
-        
+                
         # Extract segments
         segments, sample_rate = self.audio_segmenter.extract_segments(audio_file, boundaries)
         print(f"Number of segments: {len(segments)}")

@@ -3,7 +3,6 @@ from utils.visualization import visualize_segmentation
 from utils.file_operations import save_segments
 
 def main():
-    
     searcher = SemanticAudioSearch(use_cuda=True)
     
     audio_file = "../songs/BlindingLights.mp3"
@@ -15,10 +14,7 @@ def main():
         visualize=True
     )
     
-    # Visualize segmentation
     visualize_segmentation(audio_file, boundaries)
-    
-    # Save top matching segments
     save_segments(top_segments, top_indices, boundaries, sample_rate)
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ from typing import List
 
 class QueryExpander:
     def __init__(self):
-        # Rule-based and emotion-based query expansion logic
         pass
 
     def expand_query(self, original_query: str, num_expansions: int = 3) -> List[str]:
