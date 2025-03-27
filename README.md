@@ -46,7 +46,7 @@ semantic_audio_search/
 - CUDA-compatible GPU (recommended, but not required)
 - Required libraries listed in `requirements.txt`
 
-## 📦 Installation
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -96,9 +96,10 @@ results = searcher.query_with_expansion(
     audio_file, 
     text_query, 
     num_expansions=5,  # More query variations
-    segment_method='beats',  # Alternative segmentation method
+    segment_method='mfcc',  # Alternative segmentation method
     fusion_method='max',  # Different similarity fusion strategy
-    top_k=5  # More top results
+    top_k=5,  # More top results
+    use_transcription=True
 )
 ```
 
@@ -116,23 +117,14 @@ results = searcher.query_with_expansion(
   - Beat-based
 - Configurable segment length and threshold
 
+### Audio Transcription
+
+- Uses Qwen2-7B-Audio-Instruct
+
 ### Embedding Generation
 - Uses CLAP model for audio and text embeddings
 - Supports CUDA acceleration
 - Generates semantic vector representations
-
-## Use Cases
-
-- Music Information Retrieval
-- Podcast/Audio Content Analysis
-- Sound Design and Sampling
-- Audio Archiving and Indexing
-
-## Customization
-
-- Easily extend query expansion strategies
-- Add new segmentation techniques
-- Integrate different embedding models
 
 ## Performance Considerations
 
