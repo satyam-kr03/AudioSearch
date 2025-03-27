@@ -8,7 +8,7 @@ from .embedding import EmbeddingGenerator
 from .transcribe import AudioTranscriber
 
 class SemanticAudioSearch:
-    def __init__(self, clap_model=None, transcriber=None, use_cuda=True):
+    def __init__(self, clap_model=None, use_cuda=True):
         """
         Initialize Enhanced Semantic Audio Search system
         
@@ -65,10 +65,16 @@ class SemanticAudioSearch:
         
         # Optional transcription-based matching
         transcription_similarities = []
+        transcriptions = []
+
+        print(use_transcription, self.transcriber)
         if use_transcription and self.transcriber:
-            transcription_similarities = self._calculate_transcription_similarities(
+            transcription_similarities, transcriptions = self._calculate_transcription_similarities(
                 segments, sample_rate, expanded_queries
             )
+
+        print(transcription_similarities)
+        print(transcriptions)
         
         # Fuse similarity scores
         if weights is None:
@@ -104,20 +110,8 @@ class SemanticAudioSearch:
         import librosa
         import os
 
-        for segment in top_segments:
-            torchaudio.save(f'tmp/segment_9.wav', segment, sample_rate)
-            audio, sr = librosa.load('tmp/segment_9.wav', sr=sample_rate)
-            transcription = (self.transcriber.transcribe_segment(torch.tensor(audio), sr))
-            os.remove('tmp/segment_9.wav')
-            top_transcriptions.append(transcription)
-
-        print(top_transcriptions)
-
-        # if use_transcription and self.transcriber:
-        #     top_transcriptions = [
-        #         self.transcriber.transcribe_segment(torch.tensor(segment), sample_rate) 
-        #         for segment in top_segments
-        #     ]
+        # print(transcriptions)
+        top_transcriptions = [transcriptions[i] for i in top_indices]
         
         # Per-query scores
         per_query_scores = self._generate_per_query_scores(
@@ -163,11 +157,6 @@ class SemanticAudioSearch:
         Returns:
         - List of transcription-based similarity scores
         """
-        # Transcribe segments
-        # transcriptions = [
-        #     self.transcriber.transcribe_segment(torch.tensor(segment), sample_rate) 
-        #     for segment in segments
-        # ]
 
         # save each segment in a tmp directory
         import os
@@ -188,7 +177,6 @@ class SemanticAudioSearch:
             transcriptions.append(transcription)
             os.remove(f'tmp/segment_{i}.wav')   
 
-        # print("All transcriptions:")
         # print(transcriptions)
         
         # Calculate text similarities using text embedding model
@@ -208,7 +196,7 @@ class SemanticAudioSearch:
             
             transcription_similarities.append(max_query_sim)
         
-        return transcription_similarities
+        return transcription_similarities, transcriptions
     
     def _generate_per_query_scores(self, all_similarities, expanded_queries, top_indices):
         """

@@ -7,12 +7,13 @@ def main():
     searcher = SemanticAudioSearch(use_cuda=True)
    
     audio_file = "../songs/sly.mp3"
-    text_query = "never mind I'll find someone like you"
+    text_query = "settled down and found a girl"
    
     # Unpack the dictionary returned by query_with_expansion
     results = searcher.query_with_expansion(
         audio_file,
         text_query,
+        use_transcription=True,
         visualize=True
     )
 
