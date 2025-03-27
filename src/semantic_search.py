@@ -14,7 +14,6 @@ class SemanticAudioSearch:
         
         Parameters:
         - clap_model: optional pre-initialized CLAP model
-        - transcriber: AudioTranscriber instance for generating text transcriptions
         - use_cuda: whether to use CUDA if available
         """
         self.query_expander = QueryExpander()
@@ -23,14 +22,14 @@ class SemanticAudioSearch:
         self.transcriber = AudioTranscriber()
         
     def query_with_expansion(self, audio_file, text_query, 
-                             num_expansions=3, 
-                             segment_method='mfcc',
+                             num_expansions=0, 
+                             segment_method='simple',
                              visualize=False,
                              top_k=3,
                              fusion_method='weighted_average',
                              weights=None,
                              use_transcription=True,
-                             transcription_weight=0.5):
+                             transcription_weight=1):
         """
         Find audio segments that match a text query, using query expansion and optional transcription
         
@@ -67,14 +66,14 @@ class SemanticAudioSearch:
         transcription_similarities = []
         transcriptions = []
 
-        print(use_transcription, self.transcriber)
+        # print(use_transcription, self.transcriber)
         if use_transcription and self.transcriber:
             transcription_similarities, transcriptions = self._calculate_transcription_similarities(
                 segments, sample_rate, expanded_queries
             )
 
         print(transcription_similarities)
-        print(transcriptions)
+        # print(transcriptions)
         
         # Fuse similarity scores
         if weights is None:
@@ -111,7 +110,9 @@ class SemanticAudioSearch:
         import os
 
         # print(transcriptions)
-        top_transcriptions = [transcriptions[i] for i in top_indices]
+        if transcriptions:
+            top_transcriptions = [transcriptions[i] for i in top_indices]
+            print(top_transcriptions)
         
         # Per-query scores
         per_query_scores = self._generate_per_query_scores(
@@ -168,10 +169,10 @@ class SemanticAudioSearch:
             torchaudio.save(f'tmp/segment_{i}.wav', segment, sample_rate)
 
         # Transcribe segments
-        print("Transcribing segments...")
         transcriptions = []
+        import tqdm
 
-        for i in range(len(segments)):
+        for i in tqdm.tqdm(range(len(segments)), desc="Transcribing segments"):
             audio, sr = librosa.load(f'tmp/segment_{i}.wav', sr=sample_rate)
             transcription = (self.transcriber.transcribe_segment(torch.tensor(audio), sr))
             transcriptions.append(transcription)

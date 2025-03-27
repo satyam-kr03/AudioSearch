@@ -10,47 +10,47 @@ class AudioSegmenter:
     def __init__(self):
         pass
 
-    def detect_segments(self, audio_file, method='mfcc', 
+    def detect_segments(self, audio_file, method='simple', 
                          novelty_kernel_size=31, novelty_threshold=0.15,
-                         min_segment_length=3.0, max_segment_length=15.0):
+                         min_segment_length=3.0, max_segment_length=15.0,
+                         simple_segment_length=10.0, simple_overlap=5.0):
         """
         Segment audio file based on content changes using various methods
         
         Parameters:
         - audio_file: path to audio file
-        - method: segmentation method ('novelty', 'beats', or 'mfcc')
+        - method: segmentation method ('novelty', 'beats', 'mfcc', or 'simple')
         - novelty_kernel_size: kernel size for novelty detection
         - novelty_threshold: threshold for peak picking
         - min_segment_length: minimum segment length in seconds
         - max_segment_length: maximum segment length in seconds
+        - simple_segment_length: length of segments for 'simple' method
+        - simple_overlap: overlap between segments for 'simple' method
         
         Returns:
         - segment_boundaries: list of segment start times in seconds
         """
         # Load audio
         y, sr = librosa.load(audio_file)
+        audio_duration = librosa.get_duration(y=y, sr=sr)
         
         segment_boundaries = [0]  # Start with beginning of file
         
         if method == 'novelty':
-            # Compute mel spectrogram
+            # [Previous novelty method implementation remains the same]
+            # Compute spectral novelty and find boundaries
             S = librosa.feature.melspectrogram(y=y, sr=sr)
             S_db = librosa.power_to_db(S, ref=np.max)
             
-            # Compute spectral novelty
             novelty = librosa.onset.onset_strength(
                 y=y, sr=sr, 
                 hop_length=512,
                 aggregate=np.median
             )
             
-            # Apply Gaussian smoothing
             novelty_smooth = gaussian_filter1d(novelty, sigma=2)
-            
-            # Normalize
             novelty_smooth = normalize(novelty_smooth.reshape(1, -1))[0]
             
-            # Peak picking
             peaks = librosa.util.peak_pick(
                 novelty_smooth, 
                 pre_max=30, post_max=30, 
@@ -58,30 +58,25 @@ class AudioSegmenter:
                 delta=novelty_threshold, wait=1
             )
             
-            # Convert peak indices to time
             peak_times = librosa.frames_to_time(peaks, sr=sr, hop_length=512)
             segment_boundaries.extend(peak_times)
             
         elif method == 'beats':
-            # Use beat tracking for segmentation
+            # [Previous beats method implementation remains the same]
             tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
             beat_times = librosa.frames_to_time(beats, sr=sr)
             
-            # Use beats to define segment boundaries (e.g., every 4 or 8 beats)
             segment_boundaries.extend(beat_times[::4])
             
         elif method == 'mfcc':
-            # Use MFCC change for segmentation
+            # [Previous MFCC method implementation remains the same]
             mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
             
-            # Calculate delta features
             delta = np.sum(np.abs(librosa.feature.delta(mfccs)), axis=0)
             delta_smooth = gaussian_filter1d(delta, sigma=2)
             
-            # Normalize
             delta_smooth = normalize(delta_smooth.reshape(1, -1))[0]
             
-            # Peak picking
             peaks = librosa.util.peak_pick(
                 delta_smooth, 
                 pre_max=30, post_max=30, 
@@ -89,12 +84,22 @@ class AudioSegmenter:
                 delta=novelty_threshold, wait=1
             )
             
-            # Convert peak indices to time
             peak_times = librosa.frames_to_time(peaks, sr=sr, hop_length=512)
             segment_boundaries.extend(peak_times)
         
+        elif method == 'simple':
+            # New simple segmentation method with overlapping segments
+            current_start = 0
+            while current_start < audio_duration:
+                current_end = min(current_start + simple_segment_length, audio_duration)
+                segment_boundaries.append(current_end)
+                
+                # Move start point by the non-overlapping portion
+                current_start += simple_segment_length - simple_overlap
+        
         # Add end of file
-        segment_boundaries.append(librosa.get_duration(y=y, sr=sr))
+        if segment_boundaries[-1] != audio_duration:
+            segment_boundaries.append(audio_duration)
         
         # Enforce minimum and maximum segment lengths
         filtered_boundaries = [segment_boundaries[0]]
